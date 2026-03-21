@@ -27,10 +27,10 @@ class AsyncPasarguard:
         
     
     async def _make_api_request_reauth(self, method, url_suffix, params=None, json=None):
-        resp, status = self._make_api_request(method, url_suffix, params, json)
+        resp, status = await self._make_api_request(method, url_suffix, params, json)
         if status == 401:
             await self.Auth()
-            resp, status = self._make_api_request(method, url_suffix, params, json)
+            resp, status = await self._make_api_request(method, url_suffix, params, json)
         return resp, status
 
 
