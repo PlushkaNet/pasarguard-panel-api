@@ -24,14 +24,22 @@ class AsyncPasarguard:
                 }
             )
             return response.text, response.status_code
+        
+    
+    async def _make_api_request_reauth(self, method, url_suffix, params=None, json=None):
+        resp, status = self._make_api_request(method, url_suffix, params, json)
+        if status == 401:
+            await self.Auth()
+            resp, status = self._make_api_request(method, url_suffix, params, json)
+        return resp, status
 
 
     async def _make_api_post_request(self, url_suffix, params=None, json=None):
-        return await self._make_api_request("post", url_suffix, params, json)
+        return await self._make_api_request_reauth("post", url_suffix, params, json)
         
     
     async def _make_api_get_request(self, url_suffix, params=None):
-        return await self._make_api_request("get", url_suffix, params)
+        return await self._make_api_request_reauth("get", url_suffix, params)
 
 
     async def Auth(self):
