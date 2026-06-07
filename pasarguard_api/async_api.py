@@ -80,27 +80,29 @@ class AsyncPasarguard:
         """Method for requesting users list
 
         Supported arguments:
-            `limit` (int)
-            `sort` (str)
-            `load_sub` (bool)
-            `offset` (int)
-            `is_protocol` (bool)
-            `search` (str)
+        - limit (int)
+        - sort (str)
+        - load_sub (bool)
+        - offset (int)
+        - is_protocol (bool)
+        - search (str)
 
         Usage example:
         ```
-        users = await pg.GetUsers(limit=10, sort="-created_at",
-                                  load_sub=True, offset=0,
-                                  is_protocol=False)
+        users = await pg.GetUsers(
+            limit=10, sort="-created_at",
+            load_sub=True, offset=0,
+            is_protocol=False
+        )
         ```
 
         Default (used by web panel) kwargs are:
-            `limit=10`
-            `sort="-created_at"`
-            `load_sub=True`
-            `offset=0,`
-            `is_protocol=False`
-            """
+        - limit=10
+        - sort="-created_at"
+        - load_sub=True
+        - offset=0
+        - is_protocol=False
+        """
         text, _ = await self._make_api_get_request("users", kwargs)
         return Users.model_validate_json(text)
         

@@ -34,7 +34,7 @@ class User(BaseModel):
     id: int
     username: str
     status: str
-    hwid_limit: int
+    hwid_limit: int | None = None
     used_traffic: int
     lifetime_used_traffic: int
     created_at: datetime
