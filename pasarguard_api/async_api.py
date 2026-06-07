@@ -4,7 +4,7 @@ from .models import *
 class AuthorizationError(Exception): pass
 
 class AsyncPasarguard:
-    def __init__(self, url:str, user, password):
+    def __init__(self, url: str, user, password):
         self._url = url.removesuffix("/")
         self._user = user
         self._password = password
@@ -109,12 +109,12 @@ class AsyncPasarguard:
         raise NotImplementedError("GetTemplates currently not implemented")
     
 
-    async def AddUser(self, new_user:NewUser) -> User:
+    async def AddUser(self, new_user: NewUser) -> User:
         text, _ = await self._make_api_post_request("user", json=new_user.model_dump(mode="json"))
         return User.model_validate_json(text)
     
 
-    async def GetUser(self, name_pattern:str) -> User | None:
+    async def GetUser(self, name_pattern: str) -> User | None:
         text, _ = await self._make_api_get_request("users", dict(
             limit=1,
             load_sub=True,
@@ -126,7 +126,7 @@ class AsyncPasarguard:
         return users.users[0] if users.total > 0 else None
     
 
-    async def ModifyUser(self, user:User) -> User | None:
+    async def ModifyUser(self, user: User) -> User | None:
         text, status = await self._make_api_request(
             "put",
             f"user/{user.username}",

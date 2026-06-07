@@ -23,9 +23,9 @@ class SystemInfo(BaseModel):
 class User(BaseModel):
     proxy_settings: dict[str, dict]
     expire: datetime | None = None
-    data_limit: int | None = None
+    data_limit: int
     data_limit_reset_strategy: str
-    note: str | None = None
+    note: str
     on_hold_expire_duration: int | None = None
     on_hold_timeout: int | None = None
     group_ids: list[int]
@@ -34,13 +34,14 @@ class User(BaseModel):
     id: int
     username: str
     status: str
+    hwid_limit: int
     used_traffic: int
     lifetime_used_traffic: int
     created_at: datetime
     edit_at: datetime | None = None
     online_at: datetime | None = None
     subscription_url: str | None = None
-    admin: dict[str, str]
+    admin: dict[str, str | int]
 
 
 class Users(BaseModel):
