@@ -1,13 +1,15 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
 
 [project]
+
 name = "pasarguard-panel-api"
-version = "0.13"
+dynamic = ["version"]
 description = "Small async SDK for the Pasarguard panel"
-authors = [{name = "PlushkaNet"}]
+authors = [ { name = "PlushkaNet" } ]
 readme = "README.md"
+
 dependencies = [
     "pydantic>=2.0.0",
     "httpx>=0.20.0"
@@ -16,5 +18,8 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/PlushkaNet/pasarguard-panel-api"
 
-[tool.setuptools.packages.find]
-include = ["pasarguard_api*"]
+[tool.hatch.version]
+path = "pasarguard_panel_api/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pasarguard_panel_api"]

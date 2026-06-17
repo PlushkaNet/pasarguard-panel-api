@@ -1,7 +1,7 @@
+from typing import Optional
 from httpx import AsyncClient
 from .models import *
-
-class AuthorizationError(Exception): pass
+from .exceptions import AuthorizationError
 
 class AsyncPasarguard:
     def __init__(self, url: str, user, password):
@@ -10,55 +10,60 @@ class AsyncPasarguard:
         self._password = password
 
         self._token = None
+    
+
+    async def _auth(self, client: AsyncClient):
+        response = await client.post(
+            self._url + "/api/admin/token",
+            data={
+                "grant_type":"password",
+                "username":self._user,
+                "password":self._password
+            }
+        )
+        if response.status_code == 200:
+            self._token = response.json()["access_token"]
+        else:
+            raise AuthorizationError(
+                f"Authorization failed.\n" \
+                f"Status code: {response.status_code}\n" \
+                f"Message: {response.text!r}"
+            )
 
     
-    async def _make_api_request(self, method, url_suffix, params=None, json=None):
-        async with AsyncClient() as client:
-            response = await client.request(
-                method,
-                self._url + "/api/" + url_suffix,
-                params=params,
-                json=json,
-                headers={
-                    "Authorization":f"Bearer {self._token}"
-                }
-            )
-            return response.text, response.status_code
+    async def _make_api_request(self, client: AsyncClient, method: str, url_suffix: str, params=None, json=None):
+        response = await client.request(
+            method,
+            self._url + "/api/" + url_suffix,
+            params=params,
+            json=json,
+            headers={
+                "Authorization": "Bearer " + self._token
+            }
+        )
+        return response.text, response.status_code
         
     
-    async def _make_api_request_reauth(self, method, url_suffix, params=None, json=None):
-        resp, status = await self._make_api_request(method, url_suffix, params, json)
-        if status == 401:
-            await self.Auth()
-            resp, status = await self._make_api_request(method, url_suffix, params, json)
-        return resp, status
+    async def _make_api_request_reauth(self, method: str, url_suffix: str, params=None, json=None):
+        async with AsyncClient() as client:
+            resp, status = await self._make_api_request(client, method, url_suffix, params, json)
+            if status == 401:
+                await self._auth(client)
+                resp, status = await self._make_api_request(client, method, url_suffix, params, json)
+            return resp, status
 
 
-    async def _make_api_post_request(self, url_suffix, params=None, json=None):
+    async def _make_api_post_request(self, url_suffix: str, params=None, json=None):
         return await self._make_api_request_reauth("post", url_suffix, params, json)
         
     
-    async def _make_api_get_request(self, url_suffix, params=None):
+    async def _make_api_get_request(self, url_suffix: str, params=None):
         return await self._make_api_request_reauth("get", url_suffix, params)
 
 
     async def Auth(self):
         async with AsyncClient() as client:
-            response = await client.post(
-                self._url + "/api/admin/token",
-                data={
-                    "grant_type":"password",
-                    "username":self._user,
-                    "password":self._password
-                }
-            )
-            if response.status_code == 200:
-                self._token = response.json()["access_token"]
-            else:
-                raise AuthorizationError(
-                    f"Authorization failed.\n" \
-                    f"Status code: {response.status_code}\n" \
-                    f"Message: {response.text}")
+            await self._auth(client)
     
 
     async def GetSystemInfo(self) -> SystemInfo:
@@ -105,18 +110,14 @@ class AsyncPasarguard:
         """
         text, _ = await self._make_api_get_request("users", kwargs)
         return Users.model_validate_json(text)
-        
 
-    async def GetTemplates(self):
-        raise NotImplementedError("GetTemplates currently not implemented")
-    
 
     async def AddUser(self, new_user: NewUser) -> User:
         text, _ = await self._make_api_post_request("user", json=new_user.model_dump(mode="json"))
         return User.model_validate_json(text)
     
 
-    async def GetUser(self, name_pattern: str) -> User | None:
+    async def GetUser(self, name_pattern: str) -> Optional[User]:
         text, _ = await self._make_api_get_request("users", dict(
             limit=1,
             load_sub=True,
@@ -128,10 +129,11 @@ class AsyncPasarguard:
         return users.users[0] if users.total > 0 else None
     
 
-    async def ModifyUser(self, user: User) -> User | None:
+    async def ModifyUser(self, user: User) -> Optional[User]:
         text, status = await self._make_api_request(
             "put",
             f"user/{user.username}",
             json=user.model_dump(mode="json"))
-        if status != 200: return None
+        if status != 200:
+            return None
         return User.model_validate_json(text)

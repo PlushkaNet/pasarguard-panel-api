@@ -1,7 +1,10 @@
 # pasarguard-panel-api
 
-## Asynchronous (maybe sync in future too) python module for interacting with Pasarguard panel API
+## Asynchronous python module for interacting with Pasarguard panel API
 Uses httpx and pydantic for validation
+
+### Features
+- Token autorenew
 
 ## Installation
 ```
@@ -10,7 +13,7 @@ pip install git+https://github.com/PlushkaNet/pasarguard-panel-api.git
 
 ## Usage example:
 ```
-from pasarguard_api import AsyncPasarguard, NewUser
+from pasarguard_panel_api import AsyncPasarguard, NewUser
 from asyncio import run
 from dotenv import load_dotenv
 from os import getenv
@@ -71,8 +74,5 @@ run(main())
 
 ## Contributing
 If you want to contribute, report a bug, or suggest feature, feel free to open issues and pull requests
-
-## Project status
-Currently in developing, a lot of API methods does not realised
 
 ## Special thanks for Pasarguard team for the wonderful panel that makes proxy managment easier!
