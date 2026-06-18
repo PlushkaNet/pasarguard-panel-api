@@ -95,7 +95,7 @@ class AsyncPasarguard:
         return GeneralSettings.model_validate_json(text)
 
 
-    async def get_froups(self) -> Groups:
+    async def get_groups(self) -> Groups:
         """
         Get list of groups of users
         Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
