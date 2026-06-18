@@ -10,16 +10,17 @@ for consistent internal error handling.
 """
 
 class AuthorizationError(Exception):
-    """ Exception that represents error with authentification """
+    """
+    Exception that represents error with authentication
+    """
 
 class UserAlreadyExists(Exception):
     """
     Exception that represents HTTP 409 (Conflict) from
     Pasarguard panel API when trying to add user.
-    This means that user already exists
     """
 
-class UnprocessableStatus(Exception):
+class APIResponseError(Exception):
     """
     Exception for non-200 and non-201 response status codes from Pasarguard API
     """

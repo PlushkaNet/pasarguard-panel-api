@@ -1,6 +1,6 @@
 from os import getenv
 from dotenv import load_dotenv
-from pasarguard_panel_api import Pasarguard, NewUser, Status
+from pasarguard_panel_api import Pasarguard
 
 load_dotenv() # load environment variables from .env file
 

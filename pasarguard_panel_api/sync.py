@@ -2,7 +2,7 @@
 from typing import Optional, Any
 from httpx import Client
 from .models import SystemInfo, User, Users, NewUser, GeneralSettings, Groups
-from .exceptions import AuthorizationError, UserAlreadyExists, UnprocessableStatus
+from .exceptions import AuthorizationError, UserAlreadyExists, APIResponseError
 
 class Pasarguard:
     """ Class for interacting with Pasarguard panel API """
@@ -74,7 +74,7 @@ class Pasarguard:
         if status is non-200
         """
         if status not in (200, 201):
-            raise UnprocessableStatus(f"Unprocessable status: {status} with message: {message!r}")
+            raise APIResponseError(f"Unprocessable status: {status} with message: {message!r}")
 
 
     def auth(self):
