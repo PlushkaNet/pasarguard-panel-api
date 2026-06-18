@@ -6,19 +6,23 @@ load_dotenv() # load environment variables from .env file
 
 # initialize Pasarguard object
 pg = Pasarguard(
-    getenv("host"),    # str
-    getenv("user"),    # str
-    getenv("password") # str
+    getenv("host"),
+    getenv("user"),
+    getenv("password")
 )
 
-# we don't need to auth explicitly, because Pasarguard object will automatically
-# perform auth if we didn't do it before
+# No manual authentication required:
+# The client automatically obtains and renews tokens as needed.
+# Just make your API calls — the client handles all auth logic behind the scenes
 
 user = pg.get_user("asjdsajkdh") # user that doesn't exist
-print(user)
+if user is None:
+    print("user does not exist")
 
 user = pg.get_user("username1") # user that exists
-print(user)
+print(user.username)
+print(user.id)
+print(user.subscription_url)
 
-users = pg.get_users(limit=10) # get only 10 users
-print(len(users.users))
+users_result = pg.get_users(limit=10) # limit results to 10 users
+print(len(users_result.users))

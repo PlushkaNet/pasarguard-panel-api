@@ -8,14 +8,18 @@ load_dotenv() # load environment variables from .env file
 async def main():
     # initialize AsyncPasarguard object
     pg = AsyncPasarguard(
-        getenv("host"),    # str
-        getenv("user"),    # str
-        getenv("password") # str
+        getenv("host"), # Pasarguard panel URL
+        getenv("user"),
+        getenv("password")
     )
 
     await pg.auth() # request an auth token
 
-    # get our groups for users
+    # groups fields:
+    # groups.total  - total groups
+    # groups.groups - complete list of Group (from pasarguard_panel_api import Group)
+
+    # get available groups
     groups = await pg.get_groups()
     print(f"Total groups: {groups.total}") # how many groups are there
 
@@ -24,12 +28,12 @@ async def main():
         NewUser(
             username="username1",
             status=Status.ACTIVE,
-            group_ids=[groups.groups[0].id] # create in first group
+            group_ids=[groups.groups[0].id] # assign to the first available group
         )
     )
 
-    print(user.subscription_url) # print user's subscription url in format /sub/...
-    print(user.admin) # print user's administator (pydantic representation)
+    print(user.subscription_url) # prints subscription URL (e.g., /sub/ia9Akdcn2usaJs)
+    print(user.admin.username) # print user's administator name
 
     # modify user
     user.status = Status.DISABLED
