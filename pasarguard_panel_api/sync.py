@@ -1,0 +1,228 @@
+""" File with code for sync version of SDK """
+from typing import Optional, Any
+from httpx import Client
+from .models import SystemInfo, User, Users, NewUser, GeneralSettings, Groups
+from .exceptions import AuthorizationError, UserAlreadyExists, UnprocessableStatus
+
+class Pasarguard:
+    """ Class for interacting with Pasarguard panel API """
+
+    def __init__(self, url: str, user: str, password: str):
+        self._url = url.rstrip("/")
+        self._user = user
+        self._password = password
+
+        self._token = None
+
+
+    def _auth(self, client: Client, /):
+        response = client.post(
+            self._url + "/api/admin/token",
+            data={
+                "grant_type":"password",
+                "username":self._user,
+                "password":self._password
+            }
+        )
+        if response.status_code == 200:
+            self._token = response.json()["access_token"]
+        else:
+            raise AuthorizationError(
+                f"Authorization failed.\n" \
+                f"Status code: {response.status_code}\n" \
+                f"Message: {response.text!r}"
+            )
+
+
+    def _make_api_request(self, client: Client, method: str, url_suffix: str, params=None, json=None):
+        """ Will perform auto auth if `_token` is None """
+        if self._token is None:
+            self._auth(client)
+
+        response = client.request(
+            method,
+            self._url + "/api/" + url_suffix,
+            params=params,
+            json=json,
+            headers={
+                "Authorization": "Bearer " + self._token
+            }
+        )
+        return response.text, response.status_code
+
+
+    def _make_api_request_reauth(self, method: str, url_suffix: str, /, params: dict[str, Any] = None, json=None):
+        with Client() as client:
+            resp, status = self._make_api_request(client, method, url_suffix, params, json)
+            if status == 401:
+                self._auth(client)
+                resp, status = self._make_api_request(client, method, url_suffix, params, json)
+            return resp, status
+
+
+    def _make_api_post_request(self, url_suffix: str, /, params: dict[str, Any] = None, json=None):
+        return self._make_api_request_reauth("post", url_suffix, params=params, json=json)
+
+
+    def _make_api_get_request(self, url_suffix: str, params: dict[str, Any] = None, /):
+        return self._make_api_request_reauth("get", url_suffix, params=params)
+
+
+    def _check_response_status_code(self, status: int, message: str, /):
+        """
+        Checks response status code and raises `UnprocessableStatus` exception
+        if status is non-200
+        """
+        if status not in (200, 201):
+            raise UnprocessableStatus(f"Unprocessable status: {status} with message: {message!r}")
+
+
+    def auth(self):
+        """
+        Authentificates into Pasarguard panel by requesting a token
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
+        with Client() as client:
+            self._auth(client)
+
+
+    def get_system_info(self) -> SystemInfo:
+        """
+        Get system info, such as version, memory usage and etc.
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_get_request("system")
+        self._check_response_status_code(status, text)
+        return SystemInfo.model_validate_json(text)
+
+
+    def get_general_info(self) -> GeneralSettings:
+        """
+        Get general info from panel, such as default proxy settings method
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_get_request("settings/general")
+        self._check_response_status_code(status, text)
+        return GeneralSettings.model_validate_json(text)
+
+
+    def get_groups(self) -> Groups:
+        """
+        Get list of groups of users
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_get_request("groups/simple", {"all": True})
+        self._check_response_status_code(status, text)
+        return Groups.model_validate_json(text)
+
+
+    def get_users(self, **kwargs) -> Users:
+        """
+        Get list of users
+        `kwargs` are search filters that supported by panel
+
+        Supported arguments:
+        - limit (int)
+        - sort (str)
+        - load_sub (bool)
+        - offset (int)
+        - is_protocol (bool)
+        - search (str)
+
+        Usage example:
+        ```
+        users = await pg.GetUsers(
+            limit=10,
+            sort="-created_at",
+            load_sub=True,
+            offset=0,
+            is_protocol=False
+        )
+        ```
+
+        Default (used by web panel) kwargs are:
+        - limit=10
+        - sort="-created_at"
+        - load_sub=True
+        - offset=0
+        - is_protocol=False
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_get_request("users", kwargs)
+        self._check_response_status_code(status, text)
+        return Users.model_validate_json(text)
+
+
+    def add_user(self, new_user: NewUser, /) -> User:
+        """
+        Create new user
+        Returns `User` model from panel on success
+        Can raise `AuthorizationError`, `UserAlreadyExists`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_post_request("user", json=new_user.model_dump(mode="json"))
+        if status == 409:
+            raise UserAlreadyExists(f"HTTP 409 (Conflict), Pasarguard API: {text!r}")
+        self._check_response_status_code(status, text)
+        return User.model_validate_json(text)
+
+
+    def get_user(self, name_pattern: str, /) -> Optional[User]:
+        """
+        Get user from search
+        Returns single user if found
+        Returns None if no users found
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_get_request(
+            "users",
+            dict(
+                limit=1,
+                load_sub=True,
+                is_protocol=False,
+                offset=0,
+                search=name_pattern
+            )
+        )
+        self._check_response_status_code(status, text)
+        users = Users.model_validate_json(text)
+        return users.users[0] if users.total > 0 else None
+
+
+    def modify_user(self, user: User, /) -> User:
+        """
+        Modify existing user
+        Returns `User` model from panel on success
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_request_reauth(
+            "put",
+            "user/" + user.username,
+            json=user.model_dump(mode="json"))
+
+        self._check_response_status_code(status, text)
+        return User.model_validate_json(text)
+
+
+    def from_template(self, username: str, template_id: int, /) -> Optional[User]:
+        """
+        Creates user from template
+        Returns `User` model from panel on success
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
+        """
+        text, status = self._make_api_post_request(
+            "user/from_template",
+            json={
+                "user_template_id": template_id,
+                "username": username
+            }
+        )
+        self._check_response_status_code(status, text)
+        return User.model_validate_json(text)

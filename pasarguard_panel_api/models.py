@@ -35,25 +35,25 @@ class AdminMinimalInfo(BaseModel):
 
 class User(BaseModel):
     proxy_settings: dict[str, dict]
-    expire: Optional[datetime]
-    data_limit: Optional[int]
-    data_limit_reset_strategy: Optional[str]
-    note: Optional[str]
-    on_hold_expire_duration: Optional[int]
-    on_hold_timeout: Optional[int]
+    expire: Optional[datetime] = None
+    data_limit: Optional[int] = None
+    data_limit_reset_strategy: Optional[str] = None
+    note: Optional[str] = None
+    on_hold_expire_duration: Optional[int] = None
+    on_hold_timeout: Optional[int] = None
     group_ids: list[int]
-    auto_delete_in_days: Optional[int]
-    next_plan: Optional[dict]
+    auto_delete_in_days: Optional[int] = None
+    next_plan: Optional[dict] = {}
     id: int
     username: str
     status: str
-    hwid_limit: Optional[int]
+    hwid_limit: Optional[int] = None
     used_traffic: int
-    lifetime_used_traffic: Optional[int]
+    lifetime_used_traffic: Optional[int] = None
     created_at: datetime
-    edit_at: Optional[datetime]
-    online_at: Optional[datetime]
-    subscription_url: Optional[str]
+    edit_at: Optional[datetime] = None
+    online_at: Optional[datetime] = None
+    subscription_url: Optional[str] = None
     admin: AdminMinimalInfo
 
 
@@ -81,9 +81,9 @@ class GeneralSettings(BaseModel):
 class Group(BaseModel):
     id: int
     name: str
-    inbound_tags: Optional[list[str]]
-    is_disabled: bool
-    total_users: int
+    inbound_tags: Optional[list[str]] = []
+    is_disabled: Optional[bool] = None
+    total_users: Optional[int] = None
 
 
 class Groups(BaseModel):
@@ -94,15 +94,15 @@ class Groups(BaseModel):
 class Template(BaseModel):
     name: str
     data_limit: int
-    hwid_limit: Optional[int]
-    expire_duration: Optional[int]
+    hwid_limit: Optional[int] = None
+    expire_duration: Optional[int] = None
     username_prefix: str
     username_suffix: str
     group_ids: list[int]
     extra_settings: dict
     status: str
     reset_usages: bool
-    on_hold_timeout: Optional[int]
+    on_hold_timeout: Optional[int] = None
     data_limit_reset_strategy: str
     is_disabled: bool
     id: int

@@ -1,83 +1,123 @@
 # pasarguard-panel-api
 
-## Asynchronous python module for interacting with Pasarguard panel API
+## ✨ Sync & async simple python module for interacting with Pasarguard panel API
 Uses httpx and pydantic for validation
 
-### Features
+### 🔥 Features
 - Token autorenew
 
-## Installation
+## Installation using git
 ```
 pip install git+https://github.com/PlushkaNet/pasarguard-panel-api.git
 ```
 
-## Usage example:
+## 🔑 Auth into Pasarguard panel (sync):
 ```
-from asyncio import run
 from os import getenv
-from datetime import datetime, timezone, timedelta
-
+from pasarguard_panel_api import Pasarguard
 from dotenv import load_dotenv
-from pasarguard_panel_api import AsyncPasarguard, NewUser
+
+load_dotenv() # load out environment first
+
+pg = Pasarguard(
+    getenv("host"),
+    getenv("user"),
+    getenv("password")
+)
+
+pg.auth()
+```
+## ✨ Async example:
+```
+from os import getenv
+import asyncio
+from pasarguard_panel_api import AsyncPasarguard
+from dotenv import load_dotenv
+
+load_dotenv() # load out environment first
+
+pg = Pasarguard(
+    getenv("host"),
+    getenv("user"),
+    getenv("password")
+)
 
 async def main():
-    load_dotenv()
-
-    pg = AsyncPasarguard(
-        getenv("url"),
-        getenv("user"),
-        getenv("password")
-    )
-
-    # firstly, lets auth and get our session token
     await pg.auth()
 
-    # get all users list
-    users = await pg.get_users(
-        limit=10,
-        sort="-created_at",
-        load_sub=True,
-        offset=0,
-        is_protocol=False
-    )
-    print(users)
-
-    # create new user
-    info = await pg.get_general_info() # to get default proxy method from panel
-    user = await pg.add_user(
-        NewUser(
-            username="new_user",
-            group_ids=[7], # your group id, that could be obtained from groups
-            expire=datetime.now(timezone.utc) + timedelta(weeks=1),
-            proxy_settings={
-                "vless":{},
-                "shadowsocks":{"method":info.default_method}
-            }
-        )
-    )
-
-    print(user) # user that we added
-
-    # edit existing user
-    user.expire += timedelta(weeks=1) # lets add one more week to user's subscription
-    edited_user = await pg.modify_user(user)
-
-    print(edited_user)
-
-    # get system info (like perfomance stats, memory usage)
-    stats = await pg.get_system_info()
-
-    print(stats)
-
-    # get only one user from search
-    user = await pg.get_user("new") # since the username starts with 'new', it will be returned
-
-    print(user)
-
-run(main())
+asyncio.run(main())
 ```
+As you can see, API for sync and async operations is common
+## 👤 Create new user (sync)
+```
+from pasarguard_panel_api import NewUser, Status
 
-## Contributing
+# auth goes here
+
+# first let's get avaliable groups
+groups = pg.get_groups()
+
+user = pg.add_user(
+    NewUser(
+        username="new-user",
+        status=Status.ACTIVE, # enum for convenient use
+        group_ids=[groups.groups[0].id] # just first group from avaliable
+    )
+)
+
+print(user.subscription_url)
+```
+## ✨ Async example (almost the same)
+```
+from pasarguard_panel_api import NewUser, Status
+
+# auth goes here
+
+# first let's get avaliable groups
+groups = await pg.get_groups()
+
+user = await pg.add_user(
+    NewUser(
+        username="new-user",
+        status=Status.ACTIVE, # enum for convenient use
+        group_ids=[groups.groups[0].id] # just first group from avaliable
+    )
+)
+
+print(user.subscription_url)
+```
+## 🔎 Search users (sync)
+```
+# auth goes here
+
+# get only one user
+user = pg.get_user("some-username")
+print(user)
+
+# or get list of search entries
+users = pg.get_users(limit=10) # only 10 users
+print(users)
+```
+## ✏️ Modify user (sync)
+```
+# auth goes here
+
+from pasarguard_panel_api import Status
+
+user = pg.get_user("some-username") # get any user
+assert user is not None # check that user exists
+user.status = Status.DISABLED # disable user
+modified_user = pg.modify_user(user) # modify user
+print(modified_user)
+```
+**Async example is almost the same**
+
+### 📚 For more examples, check [examples](./examples/) directory
+
+## Short about
+**What this SDK does**: It gives you a fast, simple way to interact with Pasarguard's user management endpoints, without the bloat of a full-feature implementation. The code is kept lean and readable. This is a **minimal** wrapper — not a complete API coverage.
+
+## ✏️ Contributing
 If you want to contribute, report a bug, or suggest feature, feel free to open issues and pull requests
 
-## Special thanks for Pasarguard team for the wonderful panel that makes proxy managment easier!
+## ❤️ Special thanks for Pasarguard team for the wonderful panel that makes proxy managment easier!

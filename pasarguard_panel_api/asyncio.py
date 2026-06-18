@@ -2,13 +2,13 @@
 from typing import Optional, Any
 from httpx import AsyncClient
 from .models import SystemInfo, User, Users, NewUser, GeneralSettings, Groups
-from .exceptions import AuthorizationError
+from .exceptions import AuthorizationError, UserAlreadyExists, UnprocessableStatus
 
 class AsyncPasarguard:
     """ Async class for interacting with Pasarguard panel API """
 
     def __init__(self, url: str, user: str, password: str):
-        self._url = url.removesuffix("/")
+        self._url = url.rstrip("/")
         self._user = user
         self._password = password
 
@@ -68,6 +68,15 @@ class AsyncPasarguard:
         return await self._make_api_request_reauth("get", url_suffix, params=params)
 
 
+    def _check_response_status_code(self, status: int, message: str, /):
+        """
+        Checks response status code and raises `UnprocessableStatus` exception
+        if status is non-200
+        """
+        if status not in (200, 201):
+            raise UnprocessableStatus(f"Unprocessable status: {status} with message: {message!r}")
+
+
     async def auth(self):
         """
         Authentificates into Pasarguard panel by requesting a token
@@ -80,27 +89,33 @@ class AsyncPasarguard:
     async def get_system_info(self) -> SystemInfo:
         """
         Get system info, such as version, memory usage and etc.
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_get_request("system")
+        text, status = await self._make_api_get_request("system")
+        self._check_response_status_code(status, text)
         return SystemInfo.model_validate_json(text)
 
 
     async def get_general_info(self) -> GeneralSettings:
         """
         Get general info from panel, such as default proxy settings method
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_get_request("settings/general")
+        text, status = await self._make_api_get_request("settings/general")
+        self._check_response_status_code(status, text)
         return GeneralSettings.model_validate_json(text)
 
 
     async def get_groups(self) -> Groups:
         """
         Get list of groups of users
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_get_request("groups/simple", {"all": True})
+        text, status = await self._make_api_get_request("groups/simple", {"all": True})
+        self._check_response_status_code(status, text)
         return Groups.model_validate_json(text)
 
 
@@ -134,9 +149,11 @@ class AsyncPasarguard:
         - load_sub=True
         - offset=0
         - is_protocol=False
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_get_request("users", kwargs)
+        text, status = await self._make_api_get_request("users", kwargs)
+        self._check_response_status_code(status, text)
         return Users.model_validate_json(text)
 
 
@@ -144,18 +161,25 @@ class AsyncPasarguard:
         """
         Create new user
         Returns `User` model from panel on success
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UserAlreadyExists`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_post_request("user", json=new_user.model_dump(mode="json"))
+        text, status = await self._make_api_post_request("user", json=new_user.model_dump(mode="json"))
+        if status == 409:
+            raise UserAlreadyExists(f"HTTP 409 (Conflict), Pasarguard API: {text!r}")
+        self._check_response_status_code(status, text)
         return User.model_validate_json(text)
 
 
     async def get_user(self, name_pattern: str, /) -> Optional[User]:
         """
         Get user from search
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Returns single user if found
+        Returns None if no users found
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_get_request(
+        text, status = await self._make_api_get_request(
             "users",
             dict(
                 limit=1,
@@ -165,6 +189,7 @@ class AsyncPasarguard:
                 search=name_pattern
             )
         )
+        self._check_response_status_code(status, text)
         users = Users.model_validate_json(text)
         return users.users[0] if users.total > 0 else None
 
@@ -173,15 +198,15 @@ class AsyncPasarguard:
         """
         Modify existing user
         Returns `User` model from panel on success
-        Returns None on non 200 status code
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
         text, status = await self._make_api_request_reauth(
             "put",
             "user/" + user.username,
             json=user.model_dump(mode="json"))
-        if status != 200:
-            return None
+
+        self._check_response_status_code(status, text)
         return User.model_validate_json(text)
 
 
@@ -189,8 +214,8 @@ class AsyncPasarguard:
         """
         Creates user from template
         Returns `User` model from panel on success
-        Returns None on non 200 status code
-        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        Can raise `AuthorizationError`, `UnprocessableStatus`,
+        httpx exceptions and pydantic validation exceptions
         """
         text, status = await self._make_api_post_request(
             "user/from_template",
@@ -199,6 +224,5 @@ class AsyncPasarguard:
                 "username": username
             }
         )
-        if status not in (200, 201):
-            return None
+        self._check_response_status_code(status, text)
         return User.model_validate_json(text)
