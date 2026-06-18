@@ -1,12 +1,13 @@
-from pasarguard_api import AsyncPasarguard, NewUser
 from asyncio import run
-from dotenv import load_dotenv
 from os import getenv
 from datetime import datetime, timezone, timedelta
 
+from dotenv import load_dotenv
+from pasarguard_panel_api import AsyncPasarguard, NewUser
+
 async def main():
     load_dotenv()
-    
+
     pg = AsyncPasarguard(
         getenv("url"),
         getenv("user"),
@@ -14,17 +15,21 @@ async def main():
     )
 
     # firstly, lets auth and get our session token
-    await pg.Auth()
+    await pg.auth()
 
-    # getting all users list
-    users = await pg.GetUsers(limit=10, sort="-created_at",
-                              load_sub=True, offset=0,
-                              is_protocol=False)
+    # get all users list
+    users = await pg.get_users(
+        limit=10,
+        sort="-created_at",
+        load_sub=True,
+        offset=0,
+        is_protocol=False
+    )
     print(users)
 
-    # creating new user
-    info = await pg.GetGeneralInfo()
-    user = await pg.AddUser(
+    # create new user
+    info = await pg.get_general_info() # to get default proxy method from panel
+    user = await pg.add_user(
         NewUser(
             username="new_user",
             group_ids=[7], # your group id, that could be obtained from groups
@@ -38,19 +43,19 @@ async def main():
 
     print(user) # user that we added
 
-    # editing existing user
+    # edit existing user
     user.expire += timedelta(weeks=1) # lets add one more week to user's subscription
-    edited_user = await pg.ModifyUser(user)
+    edited_user = await pg.modify_user(user)
 
     print(edited_user)
 
-    # getting system info (like perfomance stats, memory usage)
-    stats = await pg.GetSystemInfo()
+    # get system info (like perfomance stats, memory usage)
+    stats = await pg.get_system_info()
 
     print(stats)
 
-    # getting only one user from search
-    user = await pg.GetUser("new") # our user starts with "new", so it will be returned
+    # get only one user from search
+    user = await pg.get_user("new") # since the username starts with 'new', it will be returned
 
     print(user)
 

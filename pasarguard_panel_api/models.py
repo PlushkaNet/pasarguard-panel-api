@@ -1,6 +1,8 @@
+""" File with Pydantic models for validation """
+
 from typing import Optional, Union
-from pydantic import BaseModel, Field
 from datetime import datetime
+from pydantic import BaseModel, Field
 
 from .enums import Status
 
@@ -71,6 +73,9 @@ class GeneralSettings(BaseModel):
 class Group(BaseModel):
     id: int
     name: str
+    inbound_tags: Optional[list[str]]
+    is_disabled: bool
+    total_users: int
 
 
 class Groups(BaseModel):

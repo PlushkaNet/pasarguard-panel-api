@@ -1,7 +1,9 @@
+""" pasarguard_panel_api module to easily use of Pasarguard panel API """
+
 from .async_api import AsyncPasarguard
 from .models import (SystemInfo, User, Users, NewUser, GeneralSettings,
                      Group, Groups)
 from .enums import Status
 from .exceptions import AuthorizationError
 
-__version__ = "0.14"
+__version__ = "0.15"

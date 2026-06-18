@@ -1,16 +1,19 @@
+""" File with code for asynchronous version of SDK """
 from typing import Optional
 from httpx import AsyncClient
-from .models import *
+from .models import SystemInfo, User, Users, NewUser, GeneralSettings, Groups
 from .exceptions import AuthorizationError
 
 class AsyncPasarguard:
+    """ Async class to make requests to Pasarguard panel API """
+
     def __init__(self, url: str, user, password):
         self._url = url.removesuffix("/")
         self._user = user
         self._password = password
 
         self._token = None
-    
+
 
     async def _auth(self, client: AsyncClient):
         response = await client.post(
@@ -30,7 +33,7 @@ class AsyncPasarguard:
                 f"Message: {response.text!r}"
             )
 
-    
+
     async def _make_api_request(self, client: AsyncClient, method: str, url_suffix: str, params=None, json=None):
         response = await client.request(
             method,
@@ -42,8 +45,8 @@ class AsyncPasarguard:
             }
         )
         return response.text, response.status_code
-        
-    
+
+
     async def _make_api_request_reauth(self, method: str, url_suffix: str, params=None, json=None):
         async with AsyncClient() as client:
             resp, status = await self._make_api_request(client, method, url_suffix, params, json)
@@ -55,34 +58,52 @@ class AsyncPasarguard:
 
     async def _make_api_post_request(self, url_suffix: str, params=None, json=None):
         return await self._make_api_request_reauth("post", url_suffix, params, json)
-        
-    
+
+
     async def _make_api_get_request(self, url_suffix: str, params=None):
         return await self._make_api_request_reauth("get", url_suffix, params)
 
 
-    async def Auth(self):
+    async def auth(self):
+        """
+        Authentificates into Pasarguard panel by requesting a token
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
         async with AsyncClient() as client:
             await self._auth(client)
-    
 
-    async def GetSystemInfo(self) -> SystemInfo:
+
+    async def get_system_info(self) -> SystemInfo:
+        """
+        Get system info, such as version, memory usage and etc.
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
         text, _ = await self._make_api_get_request("system")
         return SystemInfo.model_validate_json(text)
-        
-    
-    async def GetGeneralInfo(self) -> GeneralSettings:
+
+
+    async def get_general_info(self) -> GeneralSettings:
+        """
+        Get general info from panel, such as default proxy settings method
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
         text, _ = await self._make_api_get_request("settings/general")
         return GeneralSettings.model_validate_json(text)
-        
 
-    async def GetGroups(self) -> Groups:
+
+    async def get_froups(self) -> Groups:
+        """
+        Get list of groups of users
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
         text, _ = await self._make_api_get_request("groups/simple", {"all":True})
         return Groups.model_validate_json(text)
 
 
-    async def GetUsers(self, **kwargs) -> Users:
-        """Method for requesting users list
+    async def get_users(self, **kwargs) -> Users:
+        """
+        Get list of users
+        `kwargs` are search filters that supported by panel
 
         Supported arguments:
         - limit (int)
@@ -95,8 +116,10 @@ class AsyncPasarguard:
         Usage example:
         ```
         users = await pg.GetUsers(
-            limit=10, sort="-created_at",
-            load_sub=True, offset=0,
+            limit=10,
+            sort="-created_at",
+            load_sub=True,
+            offset=0,
             is_protocol=False
         )
         ```
@@ -107,30 +130,48 @@ class AsyncPasarguard:
         - load_sub=True
         - offset=0
         - is_protocol=False
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
         """
         text, _ = await self._make_api_get_request("users", kwargs)
         return Users.model_validate_json(text)
 
 
-    async def AddUser(self, new_user: NewUser) -> User:
+    async def add_user(self, new_user: NewUser, /) -> User:
+        """
+        Create new user
+        Returns `User` model from panel on success
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
         text, _ = await self._make_api_post_request("user", json=new_user.model_dump(mode="json"))
         return User.model_validate_json(text)
-    
 
-    async def GetUser(self, name_pattern: str) -> Optional[User]:
-        text, _ = await self._make_api_get_request("users", dict(
-            limit=1,
-            load_sub=True,
-            is_protocol=False,
-            offset=0,
-            search=name_pattern
-        ))
+
+    async def get_user(self, name_pattern: str, /) -> Optional[User]:
+        """
+        Get user from search
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
+        text, _ = await self._make_api_get_request(
+            "users",
+            dict(
+                limit=1,
+                load_sub=True,
+                is_protocol=False,
+                offset=0,
+                search=name_pattern
+            )
+        )
         users = Users.model_validate_json(text)
         return users.users[0] if users.total > 0 else None
-    
 
-    async def ModifyUser(self, user: User) -> Optional[User]:
-        text, status = await self._make_api_request(
+
+    async def modify_user(self, user: User, /) -> Optional[User]:
+        """
+        Modify existing user
+        Returns `User` model from panel on success
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
+        text, status = await self._make_api_request_reauth(
             "put",
             f"user/{user.username}",
             json=user.model_dump(mode="json"))
