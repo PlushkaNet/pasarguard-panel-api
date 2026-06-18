@@ -1,13 +1,13 @@
 """ File with code for asynchronous version of SDK """
-from typing import Optional
+from typing import Optional, Any
 from httpx import AsyncClient
 from .models import SystemInfo, User, Users, NewUser, GeneralSettings, Groups
 from .exceptions import AuthorizationError
 
 class AsyncPasarguard:
-    """ Async class to make requests to Pasarguard panel API """
+    """ Async class for interacting with Pasarguard panel API """
 
-    def __init__(self, url: str, user, password):
+    def __init__(self, url: str, user: str, password: str):
         self._url = url.removesuffix("/")
         self._user = user
         self._password = password
@@ -15,7 +15,7 @@ class AsyncPasarguard:
         self._token = None
 
 
-    async def _auth(self, client: AsyncClient):
+    async def _auth(self, client: AsyncClient, /):
         response = await client.post(
             self._url + "/api/admin/token",
             data={
@@ -35,6 +35,10 @@ class AsyncPasarguard:
 
 
     async def _make_api_request(self, client: AsyncClient, method: str, url_suffix: str, params=None, json=None):
+        """ Will perform auto auth if `_token` is None """
+        if self._token is None:
+            await self._auth(client)
+
         response = await client.request(
             method,
             self._url + "/api/" + url_suffix,
@@ -47,7 +51,7 @@ class AsyncPasarguard:
         return response.text, response.status_code
 
 
-    async def _make_api_request_reauth(self, method: str, url_suffix: str, params=None, json=None):
+    async def _make_api_request_reauth(self, method: str, url_suffix: str, /, params: dict[str, Any] = None, json=None):
         async with AsyncClient() as client:
             resp, status = await self._make_api_request(client, method, url_suffix, params, json)
             if status == 401:
@@ -56,12 +60,12 @@ class AsyncPasarguard:
             return resp, status
 
 
-    async def _make_api_post_request(self, url_suffix: str, params=None, json=None):
-        return await self._make_api_request_reauth("post", url_suffix, params, json)
+    async def _make_api_post_request(self, url_suffix: str, /, params: dict[str, Any] = None, json=None):
+        return await self._make_api_request_reauth("post", url_suffix, params=params, json=json)
 
 
-    async def _make_api_get_request(self, url_suffix: str, params=None):
-        return await self._make_api_request_reauth("get", url_suffix, params)
+    async def _make_api_get_request(self, url_suffix: str, params: dict[str, Any] = None, /):
+        return await self._make_api_request_reauth("get", url_suffix, params=params)
 
 
     async def auth(self):
@@ -96,7 +100,7 @@ class AsyncPasarguard:
         Get list of groups of users
         Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
         """
-        text, _ = await self._make_api_get_request("groups/simple", {"all":True})
+        text, _ = await self._make_api_get_request("groups/simple", {"all": True})
         return Groups.model_validate_json(text)
 
 
@@ -169,12 +173,32 @@ class AsyncPasarguard:
         """
         Modify existing user
         Returns `User` model from panel on success
+        Returns None on non 200 status code
         Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
         """
         text, status = await self._make_api_request_reauth(
             "put",
-            f"user/{user.username}",
+            "user/" + user.username,
             json=user.model_dump(mode="json"))
         if status != 200:
+            return None
+        return User.model_validate_json(text)
+
+
+    async def from_template(self, username: str, template_id: int, /) -> Optional[User]:
+        """
+        Creates user from template
+        Returns `User` model from panel on success
+        Returns None on non 200 status code
+        Can raise `AuthorizationError`, httpx exceptions and pydantic validation exceptions
+        """
+        text, status = await self._make_api_post_request(
+            "user/from_template",
+            json={
+                "user_template_id": template_id,
+                "username": username
+            }
+        )
+        if status not in (200, 201):
             return None
         return User.model_validate_json(text)

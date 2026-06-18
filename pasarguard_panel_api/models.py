@@ -1,4 +1,6 @@
-""" File with Pydantic models for validation """
+"""
+File with Pydantic models for validation data from Pasarguard panel v5
+"""
 
 from typing import Optional, Union
 from datetime import datetime
@@ -8,6 +10,7 @@ from .enums import Status
 
 class SystemInfo(BaseModel):
     version: str
+    uptime_seconds: int
     mem_total: int
     mem_used: int
     disk_total: int
@@ -23,6 +26,11 @@ class SystemInfo(BaseModel):
     limited_users: int
     incoming_bandwidth: int
     outgoing_bandwidth: int
+
+
+class AdminMinimalInfo(BaseModel):
+    id: int
+    username: str
 
 
 class User(BaseModel):
@@ -46,7 +54,7 @@ class User(BaseModel):
     edit_at: Optional[datetime]
     online_at: Optional[datetime]
     subscription_url: Optional[str]
-    admin: dict[str, Union[str, int]]
+    admin: AdminMinimalInfo
 
 
 class Users(BaseModel):
@@ -81,3 +89,20 @@ class Group(BaseModel):
 class Groups(BaseModel):
     groups: list[Group]
     total: int
+
+
+class Template(BaseModel):
+    name: str
+    data_limit: int
+    hwid_limit: Optional[int]
+    expire_duration: Optional[int]
+    username_prefix: str
+    username_suffix: str
+    group_ids: list[int]
+    extra_settings: dict
+    status: str
+    reset_usages: bool
+    on_hold_timeout: Optional[int]
+    data_limit_reset_strategy: str
+    is_disabled: bool
+    id: int

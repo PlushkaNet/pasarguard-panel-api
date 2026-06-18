@@ -6,4 +6,4 @@ from .models import (SystemInfo, User, Users, NewUser, GeneralSettings,
 from .enums import Status
 from .exceptions import AuthorizationError
 
-__version__ = "0.15"
+__version__ = "0.16"
