@@ -114,7 +114,7 @@ class AsyncPasarguard:
         Can raise `AuthorizationError`, `UnprocessableStatus`,
         httpx exceptions and pydantic validation exceptions
         """
-        text, status = await self._make_api_get_request("groups/simple", {"all": True})
+        text, status = await self._make_api_get_request("groups", {"all": True})
         self._check_response_status_code(status, text)
         return Groups.model_validate_json(text)
 
@@ -203,7 +203,7 @@ class AsyncPasarguard:
         """
         text, status = await self._make_api_request_reauth(
             "put",
-            "user/" + user.username,
+            "user/by-id/" + str(user.id),
             json=user.model_dump(mode="json"))
 
         self._check_response_status_code(status, text)
@@ -224,5 +224,7 @@ class AsyncPasarguard:
                 "username": username
             }
         )
+        if status == 409:
+            raise UserAlreadyExists(f"HTTP 409 (Conflict), Pasarguard API: {text!r}")
         self._check_response_status_code(status, text)
         return User.model_validate_json(text)
