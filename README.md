@@ -1,4 +1,4 @@
-# pasarguard-panel-api
+# 🛠️ pasarguard-panel-api
 
 ## ✨ Sync & async simple python module for interacting with Pasarguard panel API
 Uses httpx and pydantic for validation
