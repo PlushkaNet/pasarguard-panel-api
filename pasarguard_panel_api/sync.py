@@ -203,7 +203,7 @@ class Pasarguard:
         """
         text, status = self._make_api_request_reauth(
             "put",
-            "user/by-id/" + str(user.username),
+            "user/by-id/" + str(user.id),
             json=user.model_dump(mode="json"))
 
         self._check_response_status_code(status, text)
