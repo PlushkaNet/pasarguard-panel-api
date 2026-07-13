@@ -10,6 +10,6 @@ from .sync import Pasarguard
 from .models import (SystemInfo, User, Users, NewUser, GeneralSettings,
                      Group, Groups)
 from .enums import Status
-from .exceptions import AuthorizationError, APIResponseError, UserAlreadyExists
+from .exceptions import AuthorizationError, APIResponseError, UserAlreadyExistsError, PasarguardError
 
-__version__ = "0.1.9.1"
+__version__ = "0.1.9.2"

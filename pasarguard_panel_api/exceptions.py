@@ -9,18 +9,17 @@ All exceptions in this module inherit from a common base to allow
 for consistent internal error handling.
 """
 
-class AuthorizationError(Exception):
-    """
-    Exception that represents error with authentication
-    """
+class PasarguardError(Exception):
+    """Base class for all exceptions with panel inside this SDK"""
 
-class UserAlreadyExists(Exception):
+class AuthorizationError(PasarguardError):
+    """Exception that represents error with authentication"""
+
+class UserAlreadyExistsError(PasarguardError):
     """
     Exception that represents HTTP 409 (Conflict) from
     Pasarguard panel API when trying to add user.
     """
 
-class APIResponseError(Exception):
-    """
-    Exception for non-200 and non-201 response status codes from Pasarguard API
-    """
+class APIResponseError(PasarguardError):
+    """Exception for non-200 and non-201 response status codes from Pasarguard API"""

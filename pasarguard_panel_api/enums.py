@@ -1,8 +1,8 @@
-""" File with code for enums for convenience """
+"""File with code for enums for convenience"""
 from enum import StrEnum
 
 class Status(StrEnum):
-    """ Statuses for user in Pasarguard panel """
+    """Statuses for user subscription status in Pasarguard panel"""
     ACTIVE   = "active"
     DISABLED = "disabled"
     LIMITED  = "limited"

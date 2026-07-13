@@ -1,5 +1,5 @@
 """
-File with Pydantic models for validation data from Pasarguard panel v5
+File with Pydantic models for validation data from Pasarguard panel V5
 """
 
 from typing import Optional, Union
@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from .enums import Status
 
 class SystemInfo(BaseModel):
+    """Pasarguard system info model"""
     version: str
     uptime_seconds: int
     mem_total: int
@@ -27,13 +28,13 @@ class SystemInfo(BaseModel):
     incoming_bandwidth: int
     outgoing_bandwidth: int
 
-
 class AdminMinimalInfo(BaseModel):
+    """Model with information about user's administrator"""
     id: int
     username: str
 
-
 class User(BaseModel):
+    """Model with information about user"""
     proxy_settings: dict[str, dict]
     expire: Optional[datetime] = None
     data_limit: Optional[int] = None
@@ -56,13 +57,13 @@ class User(BaseModel):
     subscription_url: Optional[str] = None
     admin: AdminMinimalInfo
 
-
 class Users(BaseModel):
+    """Model with information about users from `get_users` method"""
     users: list[User]
     total: int
 
-
 class NewUser(BaseModel):
+    """Model with information about new user that will be created"""
     username: str = Field(min_length=4)
     status: str = Status.ACTIVE
     data_limit: int = 0
@@ -72,26 +73,25 @@ class NewUser(BaseModel):
     proxy_settings: dict[str, dict] = {}
     next_plan: Optional[dict] = {}
 
-
 class GeneralSettings(BaseModel):
     default_flow: Optional[str] = None
     default_method: str
 
-
 class Group(BaseModel):
+    """Model with information about group of users"""
     id: int
     name: str
     inbound_tags: Optional[list[str]] = []
     is_disabled: Optional[bool] = None
     total_users: Optional[int] = None
 
-
 class Groups(BaseModel):
+    """Model with information about groups"""
     groups: list[Group]
     total: int
 
-
 class Template(BaseModel):
+    """Model with information about user template"""
     name: str
     data_limit: int
     hwid_limit: Optional[int] = None
