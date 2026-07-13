@@ -9,12 +9,12 @@ async def main():
     load_dotenv()
 
     pg = AsyncPasarguard(
-        getenv("url"),
+        getenv("host"),
         getenv("user"),
         getenv("password")
     )
 
-    # firstly, lets auth and get our session token
+    # auth and get session token
     await pg.auth()
 
     # get all users list
@@ -32,7 +32,7 @@ async def main():
     user = await pg.add_user(
         NewUser(
             username="new_user",
-            group_ids=[7], # your group id, that could be obtained from groups
+            group_ids=[1], # your group id, that could be obtained from groups
             expire=datetime.now(timezone.utc) + timedelta(weeks=1),
             proxy_settings={
                 "vless":{},
@@ -41,10 +41,10 @@ async def main():
         )
     )
 
-    print(user) # user that we added
+    print(user)
 
     # edit existing user
-    user.expire += timedelta(weeks=1) # lets add one more week to user's subscription
+    user.expire += timedelta(weeks=1) # add one more week to user's subscription
     edited_user = await pg.modify_user(user)
 
     print(edited_user)
