@@ -1,6 +1,7 @@
 # 🛠️ pasarguard-panel-api
 
 ## ✨ Sync & async simple python module for interacting with Pasarguard panel API
+
 Uses httpx and pydantic for validation
 
 ### 🔥 Features
@@ -27,6 +28,7 @@ pg = Pasarguard(
 
 pg.auth()
 ```
+
 ## ✨ Async example:
 ```
 from os import getenv
@@ -47,7 +49,9 @@ async def main():
 
 asyncio.run(main())
 ```
+
 > Note: **The API interface is identical for both sync and async operations!**
+
 ## 👤 Create new user (sync)
 ```
 from pasarguard_panel_api import NewUser, Status
@@ -67,6 +71,7 @@ user = pg.add_user(
 
 print(user.subscription_url)
 ```
+
 ## ✨ Async example (almost the same)
 ```
 from pasarguard_panel_api import NewUser, Status
@@ -86,6 +91,7 @@ user = await pg.add_user(
 
 print(user.subscription_url)
 ```
+
 ## 🔎 Search users (sync)
 ```
 # auth goes here
@@ -98,6 +104,7 @@ print(user)
 users = pg.get_users(limit=10) # only 10 users
 print(users)
 ```
+
 ## ✏️ Modify user (sync)
 ```
 # auth goes here
@@ -110,14 +117,17 @@ user.status = Status.DISABLED # disable user
 modified_user = pg.modify_user(user) # modify user
 print(modified_user)
 ```
+
 **Async example is almost the same**
 
 ### 📚 For more examples, check the [examples](./examples/) directory
 
-## About
+## ℹ️ About
+
 **What this SDK does**: It gives you a fast, simple way to interact with Pasarguard's user management endpoints, without the bloat of a full-feature implementation. The code is kept lean and readable. This is a **minimal** wrapper — not a complete API coverage.
 
 ## ✏️ Contributing
+
 If you want to contribute, report a bug, or suggest feature, feel free to open issues and pull requests
 
-## ❤️ Special thanks for Pasarguard team for the wonderful panel that makes proxy management easier!
+**❤️ Special thanks for Pasarguard team for the wonderful panel that makes proxy management easier!**
