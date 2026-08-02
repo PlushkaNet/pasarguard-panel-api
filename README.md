@@ -1,4 +1,5 @@
 ![python-versions-supported](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
+![pypi-version](https://img.shields.io/pypi/v/pasarguard-panel-api)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # 🛠️ pasarguard-panel-api
@@ -10,9 +11,9 @@ Uses httpx and pydantic for validation
 ### 🔥 Features
 - Token autorenew
 
-## Installation using git
+## Installation
 ```
-pip install git+https://github.com/PlushkaNet/pasarguard-panel-api.git
+pip install pasarguard-panel-api
 ```
 
 ## 🔑 Auth into Pasarguard panel (sync):
