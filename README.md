@@ -124,7 +124,7 @@ print(modified_user)
 
 **Async example is almost the same**
 
-### 📚 For more examples, check the [examples](./examples/) directory
+### 📚 For more examples, check the [examples](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/examples) directory
 
 ## ℹ️ About
 
