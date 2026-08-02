@@ -6,9 +6,26 @@ build-backend = "hatchling.build"
 
 name = "pasarguard-panel-api"
 dynamic = ["version"]
-description = "Small async SDK for the Pasarguard panel"
+description = "Small sync/async SDK for the Pasarguard panel"
 authors = [ { name = "PlushkaNet" } ]
+requires-python = ">=3.11"
 readme = "README.md"
+license = { text = "MIT" }
+
+keywords = [
+    "pasarguard",
+    "api",
+    "pasarguard panel",
+    "pasarguard api"
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
 
 dependencies = [
     "pydantic>=2.0.0",
@@ -16,7 +33,8 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/PlushkaNet/pasarguard-panel-api"
+Homepage = "https://github.com/PlushkaNet/pasarguard-panel-api"
+Repository = "https://github.com/PlushkaNet/pasarguard-panel-api.git"
 
 [tool.hatch.version]
 path = "pasarguard_panel_api/__init__.py"

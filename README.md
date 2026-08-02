@@ -1,3 +1,6 @@
+![python-versions-supported](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
+
 # 🛠️ pasarguard-panel-api
 
 ## ✨ Sync & async simple python module for interacting with Pasarguard panel API
