@@ -1,137 +1,174 @@
 ![python-versions-supported](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
 ![pypi-version](https://img.shields.io/pypi/v/pasarguard-panel-api)
+![pypi-downloads](https://img.shields.io/pypi/dm/pasarguard-panel-api)
+![panel-version-supported](https://img.shields.io/badge/panel-V5-black)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # 🛠️ pasarguard-panel-api
 
-## ✨ Sync & async simple python module for interacting with Pasarguard panel API
+> Sync & async Python SDK for interacting with the [Pasarguard](https://github.com/PasarGuard/panel) panel API.
 
-Uses httpx and pydantic for validation
+A minimal, type-safe wrapper around the Pasarguard user-management API.
+Built on [httpx](https://www.python-httpx.org/) for networking and
+[pydantic v2](https://pydantic.dev/docs/) for response validation.
 
-### 🔥 Features
-- Token autorenew
+## 🔥 Features
 
-## Installation
-```
+- **Sync & async clients** with an identical interface — write the code once, run it in both worlds
+- **Automatic token handling** — the client logs in for you and transparently renews the token when it expires (401 → re-auth → retry)
+- **Type-safe responses** — every method returns validated Pydantic models
+- **Minimal & lean** — a small, readable codebase, no hidden magic
+- **Typing support** — ships with `py.typed`, fully annotated public API
+
+## 📦 Installation
+
+Requires Python **3.11+**.
+
+```bash
 pip install pasarguard-panel-api
 ```
 
-## 🔑 Auth into Pasarguard panel (sync):
-```
+## 🚀 Quick start
+
+### Sync
+
+```python
 from os import getenv
-from pasarguard_panel_api import Pasarguard
-from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv # requires `dotenv` package
+from pasarguard_panel_api import Pasarguard, NewUser, Status
 
 load_dotenv() # load environment variables
 
-pg = Pasarguard(
-    getenv("host"),
-    getenv("user"),
-    getenv("password")
+pg = Pasarguard(getenv("host"), getenv("user"), getenv("password"))
+pg.auth() # request an auth token
+
+# get available groups (`get_groups` requires admin privilegies)
+groups = pg.get_groups()
+
+# create a new user
+user = pg.add_user(
+    NewUser(
+        username="new-user",
+        status=Status.ACTIVE,
+        expire=datetime.now(tz=timezone.utc) + timedelta(weeks=1), # 1 week subscription
+        group_ids=[groups.groups[0].id], # or id that you know, e.g: 4
+    )
 )
 
-pg.auth()
+print(user.subscription_url)
 ```
 
-## ✨ Async example:
-```
-from os import getenv
+### Async
+
+```python
 import asyncio
-from pasarguard_panel_api import AsyncPasarguard
-from dotenv import load_dotenv
+from os import getenv
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv # requires `dotenv` package
+from pasarguard_panel_api import AsyncPasarguard, NewUser, Status
 
 load_dotenv() # load environment variables
 
-pg = Pasarguard(
-    getenv("host"),
-    getenv("user"),
-    getenv("password")
-)
+pg = AsyncPasarguard(getenv("host"), getenv("user"), getenv("password"))
 
 async def main():
     await pg.auth()
+    # `get_groups` requires admin privilegies
+    groups = await pg.get_groups()
+    user = await pg.add_user(
+        NewUser(
+            username="new-user",
+            status=Status.ACTIVE,
+            expire=datetime.now(tz=timezone.utc) + timedelta(weeks=1), # 1 week subscription
+            group_ids=[groups.groups[0].id], # or id that you know, e.g: 4
+        )
+    )
+    print(user.subscription_url)
 
 asyncio.run(main())
 ```
 
-> Note: **The API interface is identical for both sync and async operations!**
+> **Note:** The API interface is identical for both sync and async operations — only `await` is added.
+> Authentication is optional: if you skip `auth()`, the client will log in automatically on the first request.
 
-## 👤 Create new user (sync)
-```
-from pasarguard_panel_api import NewUser, Status
+## 📚 API overview
 
-# auth goes here
+| Method | Description | Returns |
+| --- | --- | --- |
+| `auth()` | Obtain an auth token from the panel | `None` |
+| `get_system_info()` | Panel version, uptime, memory/CPU usage, user stats | `SystemInfo` |
+| `get_general_info()` | General settings, e.g. default proxy method | `GeneralSettings` |
+| `get_groups()` | List of user groups | `Groups` |
+| `get_users(**filters)` | Search users with filters | `Users` |
+| `get_user(pattern)` | Find a single user by name pattern | `User \| None` |
+| `add_user(NewUser)` | Create a new user | `User` |
+| `modify_user(User)` | Update an existing user | `User` |
+| `from_template(name, template_id)` | Create a user from a template | `User \| None` |
 
-# get available groups first
-groups = pg.get_groups()
+### Search filters for `get_users`
 
-user = pg.add_user(
-    NewUser(
-        username="new-user",
-        status=Status.ACTIVE, # enum for convenient use
-        group_ids=[groups.groups[0].id] # just first group from available
-    )
-)
+| Argument | Type | Default |
+| --- | --- | --- |
+| `limit` | `int` | `10` |
+| `sort` | `str` | `"-created_at"` |
+| `load_sub` | `bool` | `True` |
+| `offset` | `int` | `0` |
+| `is_protocol` | `bool` | `False` |
+| `search` | `str` | — |
 
-print(user.subscription_url)
-```
+## ✏️ Examples
 
-## ✨ Async example (almost the same)
-```
-from pasarguard_panel_api import NewUser, Status
-
-# auth goes here
-
-# first let's get avaliable groups
-groups = await pg.get_groups()
-
-user = await pg.add_user(
-    NewUser(
-        username="new-user",
-        status=Status.ACTIVE, # enum for convenient use
-        group_ids=[groups.groups[0].id] # just the first group from available
-    )
-)
-
-print(user.subscription_url)
-```
-
-## 🔎 Search users (sync)
-```
-# auth goes here
-
-# get a single user
+```python
+# Search & modify users (sync)
 user = pg.get_user("some-username")
-print(user)
+assert user is not None # ensure that this user exists
 
-# or get list of search entries
-users = pg.get_users(limit=10) # only 10 users
-print(users)
+user.status = Status.DISABLED # disable the user
+user.expire = user.expire + timedelta(weeks=1) # extend subscription
+modified = pg.modify_user(user)
+
+# Create a user from a template
+user = pg.from_template("new-user", 3) # 3 - template number
+
+# System health
+stats = pg.get_system_info()
+print(stats.online_users)
 ```
 
-## ✏️ Modify user (sync)
-```
-# auth goes here
+> The async versions of all the above are identical, just add `await`.
 
-from pasarguard_panel_api import Status
+📄 More complete examples live in the [`examples/`](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/examples) directory.
 
-user = pg.get_user("some-username") # get any user
-assert user is not None # check that user exists
-user.status = Status.DISABLED # disable user
-modified_user = pg.modify_user(user) # modify user
-print(modified_user)
-```
+## 📖 Documentation
 
-**Async example is almost the same**
+Full documentation is available in the [`docs/`](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/docs) directory:
 
-### 📚 For more examples, check the [examples](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/examples) directory
+- [Quick start](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/docs/quickstart.md)
+- [API reference](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/docs/api-reference.md)
+- [Models reference](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/docs/models.md)
+- [Authentication](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/docs/authentication.md)
+- [Error handling](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/docs/errors.md)
 
 ## ℹ️ About
 
-**What this SDK does**: It gives you a fast, simple way to interact with Pasarguard's user management endpoints, without the bloat of a full-feature implementation. The code is kept lean and readable. This is a **minimal** wrapper — not a complete API coverage.
+**What this SDK does:** it gives you a fast, simple way to interact with
+Pasarguard's user management endpoints, without the bloat of a full-featured
+implementation. The code is kept lean and readable. This is a **minimal**
+wrapper — not a complete API coverage.
+
+**Limitations:** the client opens a fresh HTTP connection per request and
+currently covers the user-management surface of the API (users, groups,
+templates, system info, settings). Endpoints outside that scope are not
+implemented yet — PRs welcome.
 
 ## ✏️ Contributing
 
-If you want to contribute, report a bug, or suggest feature, feel free to open issues and pull requests
+Bug reports, feature requests and pull requests are welcome — feel free to
+open issues and PRs.
 
-**❤️ Special thanks for Pasarguard team for the wonderful panel that makes proxy management easier!**
+**❤️ Special thanks to the Pasarguard team for the wonderful panel that makes proxy management easier!**
+
+## 📄 License
+
+[MIT](https://github.com/PlushkaNet/pasarguard-panel-api/tree/main/LICENSE)
