@@ -119,10 +119,10 @@ class Pasarguard:
         return Groups.model_validate_json(text)
 
 
-    def get_users(self, **kwargs) -> Users:
+    def get_users(self, **filters) -> Users:
         """
         Get list of users
-        `kwargs` are search filters that supported by panel
+        `filters` are search filters that supported by panel
 
         Supported arguments:
         - limit (int)
@@ -143,7 +143,7 @@ class Pasarguard:
         )
         ```
 
-        Default (used by web panel) kwargs are:
+        Default (used by web panel) filters are:
         - limit=10
         - sort="-created_at"
         - load_sub=True
@@ -152,7 +152,7 @@ class Pasarguard:
         Can raise `AuthorizationError`, `APIResponseError`,
         httpx exceptions and pydantic validation exceptions
         """
-        text, status = self._make_api_get_request("users", kwargs)
+        text, status = self._make_api_get_request("users", filters)
         self._check_response_status_code(status, text)
         return Users.model_validate_json(text)
 

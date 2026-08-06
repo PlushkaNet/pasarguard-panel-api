@@ -12,4 +12,4 @@ from .models import (SystemInfo, User, Users, NewUser, GeneralSettings,
 from .enums import Status
 from .exceptions import AuthorizationError, APIResponseError, UserAlreadyExistsError, PasarguardError
 
-__version__ = "0.1.9.2"
+__version__ = "0.1.9.3"
