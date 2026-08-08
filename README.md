@@ -1,8 +1,8 @@
-![python-versions-supported](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
-![pypi-version](https://img.shields.io/pypi/v/pasarguard-panel-api)
-![pypi-downloads](https://img.shields.io/pypi/dm/pasarguard-panel-api)
-![panel-version-supported](https://img.shields.io/badge/panel-V5-black)
-![license](https://img.shields.io/badge/license-MIT-green)
+[![python-versions-supported](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](https://www.python.org/)
+[![pypi-version](https://img.shields.io/pypi/v/pasarguard-panel-api)](https://pypi.org/project/pasarguard-panel-api/)
+[![pypi-downloads](https://img.shields.io/pypi/dm/pasarguard-panel-api)](https://pypistats.org/packages/pasarguard-panel-api)
+[![panel-version-supported](https://img.shields.io/badge/panel-V5-black)](https://github.com/PasarGuard/panel)
+[![license](https://img.shields.io/badge/license-MIT-green)](https://raw.githubusercontent.com/PlushkaNet/pasarguard-panel-api/refs/heads/main/LICENSE)
 
 # 🛠️ pasarguard-panel-api
 
