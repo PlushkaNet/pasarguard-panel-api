@@ -35,7 +35,7 @@ pip install pasarguard-panel-api
 ```python
 from os import getenv
 from datetime import datetime, timedelta, timezone
-from dotenv import load_dotenv # requires `dotenv` package
+from dotenv import load_dotenv # requires `python-dotenv` package
 from pasarguard_panel_api import Pasarguard, NewUser, Status
 
 load_dotenv() # load environment variables
@@ -65,7 +65,7 @@ print(user.subscription_url)
 import asyncio
 from os import getenv
 from datetime import datetime, timedelta, timezone
-from dotenv import load_dotenv # requires `dotenv` package
+from dotenv import load_dotenv # requires `python-dotenv` package
 from pasarguard_panel_api import AsyncPasarguard, NewUser, Status
 
 load_dotenv() # load environment variables
